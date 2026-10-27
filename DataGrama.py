@@ -4,14 +4,14 @@ class DataGrama:
         self.dest_ad = ad
         self.dest_port = port
         self.mensaje = mensaje
-        self.header_tcp: bytes= self.get_header_tcp()
+        self.header_ip: bytes= self.get_header_tcp()
 
 
 
-    def get_header_tcp(self) -> bytes:
+    def get_header_ip(self) -> bytes:
         """Datagrama -> bytes
         toma los atributos del DataGrama y los traduce 
-        a un header tcp
+        a un header ip
         HEADER: 4 bytes IP - 2 bytes Puerto - 2 Bytes de largo - mensaje"""
 
         dest_ad_bytes = self.ip_to_bytes(self.dest_ad)
@@ -27,15 +27,15 @@ class DataGrama:
     @classmethod
     def get_info_header(self) -> tuple[str, int, str]:
         """DataGrama -> str int str
-        toma un header tcp en bytes y saca la informacion"""
+        toma un header ip en bytes y saca la informacion"""
 
-        ad_bytes = self.header_tcp[:4]
+        ad_bytes = self.header_ip[:4]
         ad_str = ".".join(str(b) for b in ad_bytes)
 
-        port = int.from_bytes(2, self.header_tcp[4:6])
-        msg_len = int.from_bytes(2, self.header_tcp[6:8])
+        port = int.from_bytes(2, self.header_ip[4:6])
+        msg_len = int.from_bytes(2, self.header_ip[6:8])
 
-        msg_bytes = self.header_tcp[8 : 8 + msg_len]
+        msg_bytes = self.header_ip[8 : 8 + msg_len]
         msg = msg_bytes.decode('utf-8')
 
         return (ad_str, port, msg)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     d1 = DataGrama(address, puerto, mensaje)
 
-    print(d1.header_tcp)
+    print(d1.header_ip)
 
 
 
