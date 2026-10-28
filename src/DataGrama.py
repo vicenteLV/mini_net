@@ -1,12 +1,5 @@
 class DataGrama:
 
-    def __init__(self, ad: str, port: int, mensaje: str):
-        self.dest_ad = ad
-        self.dest_port = port
-        self.mensaje = mensaje
-        self.header_ip: bytes= self.get_header_ip()
-
-
 
     def __init__(self, cadena: bytes):
         """inicializa estructura con header en formato str.encoded()"""
