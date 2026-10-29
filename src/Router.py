@@ -31,7 +31,10 @@ class Router:
         if datagrama_recvd.dest_ad == self.bind_ad[0] and datagrama_recvd.dest_port == self.bind_ad[1]:
             print(f"Mensaje: {datagrama_recvd.mensaje}\nDesde {emisor}")
         else:
-            print(f"[DEBUG] Redireccionando hacia ({datagrama_recvd.dest_ad}, {datagrama_recvd.dest_port})")
+            next_hop = (datagrama_recvd.dest_ad, datagrama_recvd.dest_port)
+
+            print(f"[DEBUG] Redireccionando hacia {next_hop}")
+            self.socket.sendto(header_ip, next_hop)
 
         
 
@@ -43,7 +46,8 @@ class Router:
 
 
 if __name__ == "__main__":
-    R1 = Router("127.0.0.1", 5000)
+    puerto = int(input("Puerto: "))
+    R1 = Router("127.0.0.1", puerto)
 
     while True:
         mensaje, desde = R1.socket.recvfrom(1024)

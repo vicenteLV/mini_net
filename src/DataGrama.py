@@ -18,31 +18,14 @@ class DataGrama:
         a un header ip
         HEADER: 4 bytes IP - 2 bytes Puerto - 2 Bytes de largo - mensaje"""
 
-        dest_ad_bytes = self.ip_to_bytes(self.dest_ad)
-        dest_port_bytes = self.dest_port.to_bytes(2)
+        dest_ad_bytes = self.ip_to_bytes(self.dest_ad) #4 bytes
+        dest_port_bytes = self.dest_port.to_bytes(2)   #2 bytes
 
         #codificar mensaje
         msg_bytes = self.mensaje.encode()
-        msg_len = len(msg_bytes).to_bytes(2)
+        msg_len = len(msg_bytes).to_bytes(2)           #2 bytes
 
         return dest_ad_bytes + dest_port_bytes + msg_len + msg_bytes
-
-
-
-    def get_info_header(self) -> tuple[str, int, str]:
-        """DataGrama -> str int str
-        toma un header ip en bytes y saca la informacion"""
-
-        ad_bytes = self.header_ip[:4]
-        ad_str = ".".join(str(b) for b in ad_bytes)
-
-        port = int.from_bytes(2, self.header_ip[4:6])
-        msg_len = int.from_bytes(2, self.header_ip[6:8])
-
-        msg_bytes = self.header_ip[8 : 8 + msg_len]
-        msg = msg_bytes.decode('utf-8')
-
-        return (ad_str, port, msg)
 
 
 
