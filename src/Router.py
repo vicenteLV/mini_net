@@ -5,9 +5,9 @@ import DataGrama
 class Router:
     #datagramas que va pasando
     on_queue: list[DataGrama.DataGrama] = []
-    rt_table: list[str] = []
+    rt_table: list[str] = []  #se descompone el contenido del txt correspondiente al router
 
-    def __init__(self, ad: str, port: int):
+    def __init__(self, ad: str, port: int, orden: int):
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.bind_ad: tuple[str, int] = (ad, port) 
 
@@ -15,14 +15,11 @@ class Router:
         self.socket.bind(self.bind_ad)
         print(f"[OK] Socket escuchando en dirección {self.bind_ad}")
 
-
-    def format_route_table(self, filename: str):
-        ruta_tabla = f"../rutas/{filename}.txt"
+        #guardar tabla correspondiente al router
+        ruta_tabla = f"../rutas/rutasR{orden}.txt"
         with open(ruta_tabla) as tabla:
             tabla_txt = tabla.read()
-
-            self.rt_table = tabla_txt.split("\n")        
-
+            self.rt_table = tabla_txt.split("\n")
 
 
 
@@ -48,9 +45,7 @@ class Router:
             else:
                 print("[DEBUG] IP no calza, revisando siguiente linea")
 
-        print("[ERROR] No se encontro siguiente salto")
-
-
+        print("[ERROR] No se encontro PATH para paquete => DESCARTADO")
 
 
 
@@ -59,10 +54,11 @@ class Router:
 
         datagrama_recvd = DataGrama.DataGrama(header_ip)
 
-        if datagrama_recvd.dest_ad == self.bind_ad[0] and datagrama_recvd.dest_port == self.bind_ad[1]:
-            print(f"Mensaje: {datagrama_recvd.mensaje}\nDesde {emisor}")
+        if datagrama_recvd.dest_ip == self.bind_ad[0] and datagrama_recvd.dest_port == self.bind_ad[1]:
+            print(f"Mensaje: {datagrama_recvd.msg}\nDesde {emisor}\n")
         else:
-            next_hop = self.redirect(datagrama_recvd.dest_ad, datagrama_recvd.dest_port)
+            next_hop = self.redirect(datagrama_recvd.dest_ip, datagrama_recvd.dest_port)
+            print(f"Redireccionando a {next_hop}")
             self.socket.sendto(header_ip, next_hop)
 
         
@@ -70,11 +66,9 @@ class Router:
 
 if __name__ == "__main__":
     puerto = int(input("Router número: "))
-    R1 = Router("127.0.0.1", 8880 + puerto)
+    R1 = Router("127.0.0.1", 8880 + puerto, puerto)
 
     while True:
-        nombre_tabla = f"rutasR{puerto}"
-        R1.format_route_table(nombre_tabla)
         mensaje, desde = R1.socket.recvfrom(1024)
 
         R1.recv_header_ip(mensaje, desde)

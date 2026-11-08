@@ -2,32 +2,28 @@ class DataGrama:
 
 
     def __init__(self, cadena: bytes):
-        """inicializa estructura con header en formato str.encoded()"""
+        """inicializa estructura con header en formato str.encoded() i.e. con ';' """
         cadena_str = cadena.decode('utf-8')
         cadena_split = cadena_str.split(";")
 
-        self.dest_ad = cadena_split[0]
+        #ip como str y cadena de 4 bytes 
+        self.dest_ip = cadena_split[0]
+        self.dest_ip_bytes = bytes([int(p) for p in self.dest_ip.split(".")]) 
+
+        #puerto (int y bytes)  
         self.dest_port = int(cadena_split[1])
-        self.mensaje = cadena_split[2]
+        self.dest_port_bytes = self.dest_port.to_bytes(2)
 
+        #mensaje (str y bytes)
+        self.msg = cadena_split[2]
+        self.msg_bytes = cadena_split[2].encode()
+        self.msg_len = len(self.msg_bytes).to_bytes(2)
 
+        #header completo en bytes (4 bytes IP - 2 bytes Puerto - 2 bytes de largo - mensaje), sin ';'
+        self.header = self.dest_ip_bytes + self.dest_port_bytes + self.msg_len + self.msg_bytes
 
-    def get_header_ip(self) -> bytes:
-        """Datagrama -> bytes
-        toma los atributos del DataGrama y los traduce 
-        a un header ip
-        HEADER: 4 bytes IP - 2 bytes Puerto - 2 Bytes de largo - mensaje"""
-
-        dest_ad_bytes = self.ip_to_bytes(self.dest_ad) #4 bytes
-        dest_port_bytes = self.dest_port.to_bytes(2)   #2 bytes
-
-        #codificar mensaje
-        msg_bytes = self.mensaje.encode()
-        msg_len = len(msg_bytes).to_bytes(2)           #2 bytes
-
-        return dest_ad_bytes + dest_port_bytes + msg_len + msg_bytes
-
-
+        #header con ';'
+        self.header_original = cadena
 
 
     @staticmethod
@@ -62,13 +58,11 @@ class DataGrama:
 
 
 if __name__ == "__main__":
-    address = ("localhost")
+    address = ("127.0.0.1")
     puerto = 5000
     mensaje = "hola que tal"
 
-    d1 = DataGrama(address, puerto, mensaje)
-
-    print(d1.header_ip)
+    
 
 
 
