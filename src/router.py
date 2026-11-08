@@ -8,7 +8,7 @@ import sys
 class Router:
     #datagramas que va pasando
     on_queue: list[DataGrama.DataGrama] = []
-    rt_table: list[str] = []  #se descompone el contenido del txt correspondiente al router
+    rt_table: list[str] = None  #se descompone el contenido del txt correspondiente al router
 
     def __init__(self, ad: str, port: int):
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -20,12 +20,18 @@ class Router:
 
 
 
-    def check_routes(self, routes_file_name: str, destination_address: tuple[str, int]) -> tuple[str, int]:
-        #guardar tabla correspondiente al router
-        ruta_tabla = f"../rutas/{routes_file_name}"
+    def load_rt_table(self, filename: str) -> None:
+        ruta_tabla = f"../rutas/{filename}"
         with open(ruta_tabla) as rt:
             tabla_txt = rt.read()
             self.rt_table = tabla_txt.split("\n")
+
+
+
+    def check_routes(self, routes_file_name: str, destination_address: tuple[str, int]) -> tuple[str, int]:
+        #guardar tabla correspondiente al router si aun no se inicializa
+        if self.rt_table == None:
+            self.load_rt_table(routes_file_name)
 
         #reviso linea por linea
         for line in self.rt_table:
@@ -69,10 +75,11 @@ class Router:
 
             next_hop = self.check_routes(rt_filename, (dgram_recvd.header_dict["ip"], dgram_recvd.header_dict["port"]))
             if next_hop != None:    
-                print(f"Redireccionando a {next_hop}")
+                print(f"Redirigiendo paquete, con destino final {dgram_recvd.header_dict["ip"]}:{dgram_recvd.header_dict["port"]} desde {self.bind_ad} hacia {next_hop}")
+
                 self.socket.sendto(header_ip, next_hop)
             else:
-                print(f"[DEBUG] Paquete descartado")
+                print(f"[DEBUG] Paquete descartado, no se encontró dirección")
 
 
 

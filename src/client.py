@@ -7,7 +7,8 @@ import DataGrama
 paquetes = [
     {"ip": "127.0.0.1", "port": 8881, "msg": "mensaje para el primer router"},
     {"ip": "127.0.0.1", "port": 8882, "msg": "mensaje para el segundo router"},
-    {"ip": "127.0.0.1", "port": 8883, "msg": "mensaje para el tercer router"}
+    {"ip": "127.0.0.1", "port": 8883, "msg": "mensaje para el tercer router"},
+    {"ip": "127.0.0.1", "port": 8884, "msg": "mensaje para el cuarto router"}
 ]
 
 def send_package(package_dict: dict, client_socket: socket.socket, 
@@ -19,6 +20,7 @@ def send_package(package_dict: dict, client_socket: socket.socket,
     client_socket.sendto(header, ad)
 
 
+
 if __name__ == "__main__":
     cliente_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -27,7 +29,9 @@ if __name__ == "__main__":
             address = ("127.0.0.1", 8880 + i)
             print(f"Destino final: {(pack["ip"], pack["port"])}\n")
             send_package(pack, cliente_socket, address)
-            time.sleep(5)
+            time.sleep(3)
+
+    
 
 
 
