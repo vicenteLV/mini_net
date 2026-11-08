@@ -28,7 +28,8 @@ class DataGrama:
 
 
 
-    def parse_packet(self, IP_packet: bytes) -> dict:
+    @staticmethod
+    def parse_packet(IP_packet: bytes) -> dict:
         """bytes -> dict
         recibe paquete en el formato sin ';' y lo pasa a un diccionario"""
         packet_dict = {}
@@ -52,11 +53,12 @@ class DataGrama:
 
 
 
-    def create_packet(self, parsed_IP_packet: dict) -> bytes:
+    @staticmethod
+    def create_packet(parsed_IP_packet: dict) -> bytes:
         """dict -> bytes
         recibe estructura de diccionario de paquete, devuelve el header + mensaje
         en bytes"""
-        ip_bytes = self.ip_to_bytes(parsed_IP_packet["ip"])
+        ip_bytes = DataGrama.ip_to_bytes(parsed_IP_packet["ip"])
         port_bytes = parsed_IP_packet["port"].to_bytes(2)
         msg_bytes = parsed_IP_packet["msg"].encode()
 
@@ -65,15 +67,13 @@ class DataGrama:
 
 
 
-
-
     @staticmethod
-    def ip_to_bytes(id_ad: str) -> bytes:
+    def ip_to_bytes(ip_str: str) -> bytes:
         """str -> bytes
         convierde cualquier ipv4 en formato str a una lista bytes de
         largo 4"""
         #corroborar que sea una IPv4 valida
-        partes_ip = id_ad(".")
+        partes_ip = ip_str.split(".")
         if len(partes_ip) != 4:
             raise ValueError("Una IPv4 debe tener exactamente 4 octetos")
 
@@ -108,9 +108,22 @@ class DataGrama:
 
 
 if __name__ == "__main__":
-    address = ("127.0.0.1")
+    #----- TEST parse y create -----
     puerto = 5000
-    mensaje = "hola que tal"
+    msg = "hola que tal"
+    IP_packet_v1 = bytes([127, 0, 0, 1]) + puerto.to_bytes(2) + msg.encode()
+
+    IP_packet_dict = DataGrama.parse_packet(IP_packet_v1)
+    print(f"IP del paquete: {IP_packet_dict["ip"]}")
+    print(f"Puerto de destino: {IP_packet_dict["port"]}")
+    print(f"Mensaje del paquete: {IP_packet_dict["msg"]}")
+
+    IP_packet_v2 = DataGrama.create_packet(IP_packet_dict)
+    print("IP_packet_v1 == IP_packet_v2 ? {}", format(IP_packet_v1 == IP_packet_v2))
+    print(IP_packet_v1 == IP_packet_v2)
+
+
+
 
     
 
