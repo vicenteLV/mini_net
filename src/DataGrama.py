@@ -28,7 +28,7 @@ class DataGrama:
 
 
 
-    def parse_packet(IP_packet: bytes):
+    def parse_packet(self, IP_packet: bytes) -> dict:
         """bytes -> dict
         recibe paquete en el formato sin ';' y lo pasa a un diccionario"""
         packet_dict = {}
@@ -49,6 +49,19 @@ class DataGrama:
         packet_dict["msg"] = IP_packet[6:].decode('utf-8')
 
         return packet_dict
+
+
+
+    def create_packet(self, parsed_IP_packet: dict) -> bytes:
+        """dict -> bytes
+        recibe estructura de diccionario de paquete, devuelve el header + mensaje
+        en bytes"""
+        ip_bytes = self.ip_to_bytes(parsed_IP_packet["ip"])
+        port_bytes = parsed_IP_packet["port"].to_bytes(2)
+        msg_bytes = parsed_IP_packet["msg"].encode()
+
+        return ip_bytes + port_bytes + msg_bytes
+
 
 
 
