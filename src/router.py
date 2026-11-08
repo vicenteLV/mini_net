@@ -1,5 +1,8 @@
+#ejecucion: python3 router.py 127.0.0.1 8881 rutas.txt
+
 import socket
 import DataGrama
+import sys
 
 
 class Router:
@@ -7,7 +10,7 @@ class Router:
     on_queue: list[DataGrama.DataGrama] = []
     rt_table: list[str] = []  #se descompone el contenido del txt correspondiente al router
 
-    def __init__(self, ad: str, port: int, orden: int):
+    def __init__(self, ad: str, port: int, tabla: str):
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.bind_ad: tuple[str, int] = (ad, port) 
 
@@ -16,9 +19,9 @@ class Router:
         print(f"[OK] Socket escuchando en dirección {self.bind_ad}")
 
         #guardar tabla correspondiente al router
-        ruta_tabla = f"../rutas/rutasR{orden}.txt"
-        with open(ruta_tabla) as tabla:
-            tabla_txt = tabla.read()
+        ruta_tabla = f"../rutas/{tabla}"
+        with open(ruta_tabla) as rt:
+            tabla_txt = rt.read()
             self.rt_table = tabla_txt.split("\n")
 
 
@@ -65,8 +68,11 @@ class Router:
 
 
 if __name__ == "__main__":
-    puerto = int(input("Router número: "))
-    R1 = Router("127.0.0.1", 8880 + puerto, puerto)
+    ip_bind = sys.argv[1]
+    port_bind = int(sys.argv[2])
+    rt_table = sys.argv[3]
+
+    R1 = Router(ip_bind, port_bind, rt_table)
 
     while True:
         mensaje, desde = R1.socket.recvfrom(1024)
