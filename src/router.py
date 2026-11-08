@@ -10,35 +10,35 @@ class Router:
     on_queue: list[DataGrama.DataGrama] = []
     rt_table: list[str] = []  #se descompone el contenido del txt correspondiente al router
 
-    def __init__(self, ad: str, port: int, tabla: str):
+    def __init__(self, ad: str, port: int):
         self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.bind_ad: tuple[str, int] = (ad, port) 
 
         #conexion y escuchar
         self.socket.bind(self.bind_ad)
-        print(f"[OK] Socket escuchando en dirección {self.bind_ad}")
+        print(f"[OK] Socket escuchando en dirección {self.bind_ad}\n")
 
+
+
+    def check_routes(self, routes_file_name: str, destination_address: tuple[str, int]) -> tuple[str, int]:
         #guardar tabla correspondiente al router
-        ruta_tabla = f"../rutas/{tabla}"
+        ruta_tabla = f"../rutas/{routes_file_name}"
         with open(ruta_tabla) as rt:
             tabla_txt = rt.read()
             self.rt_table = tabla_txt.split("\n")
 
-
-
-    def redirect(self, ip: str, port: int) -> tuple[str, int]:
         #reviso linea por linea
         for line in self.rt_table:
             fila = line.split(" ")
             ip_line = fila[0].split("/")[0] #por ahora sin mascara
 
             #calza ip
-            if ip == ip_line:
+            if destination_address[0] == ip_line:
                 puerto_inicial = int(fila[1])
                 puerto_final = int(fila[2])
 
                 #calza puerto
-                if port >= puerto_inicial and port <= puerto_final:
+                if destination_address[1] >= puerto_inicial and destination_address[1] <= puerto_final:
                     ip_hop = fila[3]
                     port_hop = int(fila[4])
 
@@ -49,35 +49,48 @@ class Router:
                 print("[DEBUG] IP no calza, revisando siguiente linea")
 
         print("[ERROR] No se encontro PATH para paquete => DESCARTADO")
+        return None
 
 
 
 
-    def recv_header_ip(self, header_ip: bytes, emisor: tuple[str, int]):
+    def recv_header_ip(self, rt_filename: str, header_ip: bytes, emisor: tuple[str, int]):
+        #para distinguir en prints
+        nombre_router = rt_filename.split(".")[0][5:]
 
-        datagrama_recvd = DataGrama.DataGrama(header_ip)
+        dgram_recvd = DataGrama.DataGrama(header_ip) 
 
-        if datagrama_recvd.dest_ip == self.bind_ad[0] and datagrama_recvd.dest_port == self.bind_ad[1]:
-            print(f"Mensaje: {datagrama_recvd.msg}\nDesde {emisor}\n")
+        print(f"\n####### {nombre_router} #######")
+
+        if dgram_recvd.header_dict["ip"] == self.bind_ad[0] and dgram_recvd.header_dict["port"] == self.bind_ad[1]:
+            print(f"Mensaje: {dgram_recvd.header_dict["msg"]}")
+            print(f"Desde {emisor}\n")
         else:
-            next_hop = self.redirect(datagrama_recvd.dest_ip, datagrama_recvd.dest_port)
-            print(f"Redireccionando a {next_hop}")
-            self.socket.sendto(header_ip, next_hop)
+
+            next_hop = self.check_routes(rt_filename, (dgram_recvd.header_dict["ip"], dgram_recvd.header_dict["port"]))
+            if next_hop != None:    
+                print(f"Redireccionando a {next_hop}")
+                self.socket.sendto(header_ip, next_hop)
+            else:
+                print(f"[DEBUG] Paquete descartado")
+
+
+
+    @staticmethod
+    def main(ip_str, port, rt_table):
+    
+        R1 = Router(ip_str, int(port))
+    
+        while True:
+            mensaje, desde = R1.socket.recvfrom(1024)
+    
+            R1.recv_header_ip(rt_table, mensaje, desde)
 
         
 
 
 if __name__ == "__main__":
-    ip_bind = sys.argv[1]
-    port_bind = int(sys.argv[2])
-    rt_table = sys.argv[3]
-
-    R1 = Router(ip_bind, port_bind, rt_table)
-
-    while True:
-        mensaje, desde = R1.socket.recvfrom(1024)
-
-        R1.recv_header_ip(mensaje, desde)
+    Router.main(sys.argv[1], sys.argv[2], sys.argv[3])
 
         
 

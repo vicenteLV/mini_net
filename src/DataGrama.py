@@ -2,29 +2,11 @@ class DataGrama:
 
 
     def __init__(self, cadena: bytes):
-        """inicializa estructura con header en formato str.encoded() i.e. con ';' """
-        cadena_str = cadena.decode('utf-8')
-        cadena_split = cadena_str.split(";")
-
-        #ip como str y cadena de 4 bytes 
-        self.dest_ip = cadena_split[0]        
-        self.dest_ip_bytes = self.ip_to_bytes(self.dest_ip) 
-
-
-        #puerto (int y bytes)  
-        self.dest_port = int(cadena_split[1])
-        self.dest_port_bytes = self.dest_port.to_bytes(2)
-
-        #mensaje (str y bytes)
-        self.msg = cadena_split[2]
-        self.msg_bytes = cadena_split[2].encode()
-        self.msg_len = len(self.msg_bytes).to_bytes(2)
-
-        #header completo en bytes (4 bytes IP - 2 bytes Puerto - 2 bytes de largo - mensaje), sin ';'
-        self.header = self.dest_ip_bytes + self.dest_port_bytes + self.msg_len + self.msg_bytes
-
-        #header con ';'
-        self.header_original = cadena
+        """inicializa estructura con header, asumiendo estructura,
+        (4 bytes IP - 2 bytes Puerto - mensaje) """
+        #header completo en bytes (4 bytes IP - 2 bytes Puerto - mensaje), sin ';'
+        self.header_dict = self.parse_packet(cadena)
+        self.header = self.create_packet(self.header_dict)
 
 
 
@@ -79,7 +61,7 @@ class DataGrama:
 
         for octeto in partes_ip:
             if int(octeto) > 255 or int(octeto) < 0:
-                raise ValueError(f"Valores de IP deben estar entre 0 y 255")
+                raise ValueError(f"Valores de IPv4 deben estar entre 0 y 255")
 
         
         return bytes([int(p) for p in partes_ip]) 
@@ -120,7 +102,10 @@ if __name__ == "__main__":
 
     IP_packet_v2 = DataGrama.create_packet(IP_packet_dict)
     print("IP_packet_v1 == IP_packet_v2 ? {}", format(IP_packet_v1 == IP_packet_v2))
-    print(IP_packet_v1 == IP_packet_v2)
+    if IP_packet_v1 == IP_packet_v2:
+        print("[TEST] create y parse funcionan bien")
+    else:
+        print("funciones create y parse no funcionan bien")
 
 
 
