@@ -48,6 +48,10 @@ class Router:
                     ip_hop = fila[3]
                     port_hop = int(fila[4])
 
+                    #round robin, codigo revisa por orden en la lista, cuando una linea se usa pasa al final
+                    self.rt_table.remove(line)
+                    self.rt_table.append(line)
+
                     return (ip_hop, port_hop) 
                 else:
                     print("[DEBUG] puerto no calza, revisando siguiente linea")
