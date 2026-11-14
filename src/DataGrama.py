@@ -16,7 +16,7 @@ class DataGrama:
         recibe paquete en el formato sin ';' y lo pasa a un diccionario"""
         packet_dict = {}
 
-        #IP
+        #IP, str
         ip_octs= []
         for i in range(4):
             ip_digit = IP_packet[i]
@@ -24,11 +24,11 @@ class DataGrama:
 
         packet_dict["ip"] = f"{ip_octs[0]}.{ip_octs[1]}.{ip_octs[2]}.{ip_octs[3]}"
 
-        #puerto
+        #puerto, int
         puerto_bytes = IP_packet[4:6]
         packet_dict["port"] = int.from_bytes(puerto_bytes, byteorder='big')
 
-        #mensaje
+        #mensaje, str
         packet_dict["msg"] = IP_packet[6:].decode('utf-8')
 
         return packet_dict
@@ -90,12 +90,38 @@ class DataGrama:
 
 
 if __name__ == "__main__":
-    #----- TEST parse y create -----
-    puerto = 5000
-    msg = "hola que tal"
-    IP_packet_v1 = bytes([127, 0, 0, 1]) + puerto.to_bytes(2) + msg.encode()
+    #----- TESTS -----
+    def test_ip_to_bytes():
+        return
 
-    IP_packet_dict = DataGrama.parse_packet(IP_packet_v1)
+
+
+    def test_parse_packet(ip: str, puerto: int, msg: str) -> bool:
+        IP_packet = DataGrama.ip_to_bytes(ip) + puerto.to_bytes(2) + msg.encode()
+        IP_packet_dict = DataGrama.parse_packet(IP_packet)
+
+        try: 
+            assert(IP_packet_dict["ip"] == ip)
+        except AssertionError:
+            print("Error en el valor de ip")
+            return False
+
+        try: 
+            assert(IP_packet_dict["port"] == puerto)
+        except AssertionError:
+            print("Error en el valor del puerto")
+            return False
+
+        try:
+            assert(IP_packet_dict["msg"] == msg)
+        except AssertionError:
+            print("Error en el contenido del mensaje")
+            return False
+        
+            
+
+
+
     print(f"IP del paquete: {IP_packet_dict["ip"]}")
     print(f"Puerto de destino: {IP_packet_dict["port"]}")
     print(f"Mensaje del paquete: {IP_packet_dict["msg"]}")

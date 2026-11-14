@@ -82,15 +82,17 @@ class Router:
                 print(f"Redirigiendo paquete, con destino final {dgram_recvd.header_dict["ip"]}:{dgram_recvd.header_dict["port"]} desde {self.bind_ad} hacia {next_hop}")
 
                 self.socket.sendto(header_ip, next_hop)
-            else:
-                print(f"[DEBUG] Paquete descartado, no se encontró dirección")
+            #else:
+                
+                #mensaje de descartado esta en la funcion check_routes
+                #print(f"[DEBUG] PAQUETE DESCARTADO, NO SE ENCONTRO DIRECCION")
 
 
 
     @staticmethod
-    def main(ip_str, port, rt_table):
+    def main(ip_str: str, port: int, rt_table: str):
     
-        R1 = Router(ip_str, int(port))
+        R1 = Router(ip_str, port)
     
         while True:
             mensaje, desde = R1.socket.recvfrom(1024)

@@ -5,18 +5,29 @@ import router
 routers = [
     {"nombre": "Router1", 
      "ip": "127.0.0.1", 
-     "puerto": "8881", 
+     "puerto": 8881, 
      "filename": "rutasR1.txt"},
 
     {"nombre": "Router2", 
      "ip": "127.0.0.1", 
-     "puerto": "8882", 
+     "puerto": 8882, 
      "filename": "rutasR2.txt"},
 
     {"nombre": "Router3", 
      "ip": "127.0.0.1", 
-     "puerto": "8883", 
-     "filename": "rutasR3.txt"}
+     "puerto": 8883, 
+     "filename": "rutasR3.txt"},
+
+     {"nombre": "Router4",
+      "ip": "127.0.0.1",
+      "puerto": 8884,
+      "filename": "rutasR4.txt"},
+      
+      {"nombre": "Router5",
+       "ip": "127.0.0.1", 
+       "puerto": 8885, 
+       "filename": "rutasR3.txt"}
+
 ]
 
 
