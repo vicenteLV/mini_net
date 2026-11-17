@@ -12,10 +12,11 @@ class Dgram:
 
     def __init__(self, segment: bytes):
         self.header : bytes = segment
-        self.header_dict : dict = {}
+        self.header_dict : dict = self.parse_packet(self.header)
 
 
-    def parse_packet(self, IP_packet: bytes) -> dict:
+    @staticmethod
+    def parse_packet(IP_packet: bytes) -> dict:
         dicc = {}
         ip = IP_packet[:4]
         port = IP_packet[4:6]
@@ -38,11 +39,12 @@ class Dgram:
 
 
 
-    def create_packet(self, parsed_IP_packet: dict) -> bytes:
+    @staticmethod
+    def create_packet(parsed_IP_packet: dict) -> bytes:
         ip_ints = [int(o) for o in parsed_IP_packet["ip"].split(".")]
         #validacion de octetos en ipv4
         try:
-            self.is_ip_valid(ip_ints)
+            Dgram.is_ip_valid(ip_ints)
         except ValueError:
             print("[ERROR] No se pudo crear segmento\n")
 

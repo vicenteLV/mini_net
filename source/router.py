@@ -21,6 +21,19 @@ class Router:
             self.rt_table = tabla_rutas.split("\n")
 
 
+    def send_packet(self, final_ad: tuple[str, int], msg: str, next_ad: tuple[str, int]):
+        #armar diccionario
+        dict_segmento = {
+            "ip": final_ad[0],
+            "port": final_ad[1],
+            "msg": msg
+        }
+        packet_segmento = dgrama.Dgram.create_packet(dict_segmento)
+
+        #enviar a la siguiente direccion
+        self.rt_socket.sendto(packet_segmento, next_ad)
+
+
     @staticmethod
     def main(bind_ad: tuple[str, int], filename: str):
         router = Router(bind_ad, filename)
