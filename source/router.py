@@ -34,9 +34,7 @@ class Router:
         self.rt_socket.sendto(packet_segmento, next_ad)
 
 
-    def check_routes(self, routes_file_name: str, destination_address: str) -> tuple[str, int]:
-        if self.rt_table == None:
-            self.load_route_table(routes_file_name)
+    def check_routes(self, destination_address: str) -> tuple[str, int]:
 
         for linea in self.rt_table:
             linea_split = linea.split(" ")
@@ -49,14 +47,32 @@ class Router:
 
         return None
 
+    def recv_segment(self):
+        segment, desde = self.rt_socket.recvfrom(1024) 
+        segment_dgram = dgrama.Dgram(segment) #con esto ya tenemos header(segmento) y diccionario del mensaje
+        segment_dest = (segment_dgram.header_dict["ip"], segment_dgram.header_dict["port"])
+
+        #si es el router de destino
+        if segment_dest[0] == self.bind_ad[0] and segment_dest[1] == self.bind_ad[1]:
+            print(f"Mensaje recibido desde {desde}:")
+            print(segment_dgram.header_dict["msg"])
+
+        else: 
+            next_hop = self.check_routes((segment_dgram.header_dict[0], segment_dgram.header_dict[1]))
+            if next_hop == None:
+                print("[ERROR] No se encontro una direccion para el paquete => DESCARTADO\n")
+            else:
+                self.send_packet(segment_dest, segment_dgram.header_dict["msg"], next_hop)
+
 
     @staticmethod
     def main(bind_ad: tuple[str, int], filename: str):
         router = Router(bind_ad, filename)
 
+        #ciclo de recepcion de mensajes
         while True:
-            segment, desde = router.rt_socket.recvfrom(1024) 
-            print(segment.decode())
+            router.recv_segment()
+
 
 
 if __name__ == "__main__":
