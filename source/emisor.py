@@ -33,6 +33,7 @@ def test_pack_sending(n: int) -> bool:
     -> Mensaje a R5 se envía a: 8885, 8881, 8881 -> se repite 8884 para comprobar round robin
     -> Mensaje a R10 (no existe) se envía a: 8881, 8885 -> comprobar que paquete se descarta siempre
     """
+
     destinos = [[8881, 8883, 8883],       #destino final 8881
                 [8882, 8885, 8885],       #destino final 8882
                 [8883, 8884, 8884],       #destino final 8883
@@ -49,14 +50,29 @@ def test_pack_sending(n: int) -> bool:
         time.sleep(1)
 
 
-def test_send_default()
+def test_send_default():
+    #para solo un caso
+    
+    segmento_pack = dgrama.Dgram.create_packet({
+        "ip": "128.0.0.1",
+        "port": 8900,
+        "msg": "Mensaje para el router default"
+    })
+
+    #prueba desde el R1 al R5
+    for i in range(1, 6):
+        print(f"[INFO] Enviando paquete fuera de la red, siguiente salto 127.0.0.1:888{i}")
+        emisor_socket.sendto(segmento_pack, ("127.0.0.1", 8880 + i))
+        time.sleep(1)
+
+
         
 
 
 if __name__ == "__main__":
 
-    print("##### VIENDO ENVÍOS DE PAQUETES #####")
     """
+    print("##### VIENDO ENVÍOS DE PAQUETES #####")
     for i in range(len(paquetes)):
         test_pack_sending(i)
         time.sleep(2)
@@ -64,6 +80,14 @@ if __name__ == "__main__":
 
 
     print("##### ENVÍO FUERA DE LA RED #####")
+    test_send_default()
+
+
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        emisor_socket.close()
 
         
 

@@ -8,7 +8,7 @@ import dgrama
 
 #lista de diccionarios para inicializar routers
 routers = [
-    {"nombre": "Router0","ip": "127.0.0.1", "port": 8880, "filename": "R0"},
+    {"nombre": "Router0","ip": "127.0.0.1", "port": 8880, "filename": "R0", "default": False},
     {"nombre": "Router1","ip": "127.0.0.1", "port": 8881, "filename": "R1"},
     {"nombre": "Router2","ip": "127.0.0.1", "port": 8882, "filename": "R2"},
     {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R3"},
@@ -26,7 +26,11 @@ for rt in routers:
 
     if pid == 0:
             #proceso hijo
-            router.Router.main((rt["ip"], rt["port"]), rt["filename"])
+            if rt["nombre"] == "Router Default":
+                 router.Router.main((rt["ip"], rt["port"]), rt["filename"], True)
+
+            else:
+                router.Router.main((rt["ip"], rt["port"]), rt["filename"])
 
             os._exit(0)
                 

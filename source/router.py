@@ -45,19 +45,6 @@ class Router:
         return txt
 
 
-    def send_packet(self, final_ad: tuple[str, int], msg: str, next_ad: tuple[str, int]):
-        #armar diccionario
-        dict_segmento = {
-            "ip": final_ad[0],
-            "port": final_ad[1],
-            "msg": msg
-        }
-        packet_segmento = dgrama.Dgram.create_packet(dict_segmento)
-
-        #enviar a la siguiente direccion
-        self.rt_socket.sendto(packet_segmento, next_ad)
-
-
     def check_routes(self, destination_address: tuple[str, int], debug = False) -> tuple[str, int]:
 
         for linea in self.rt_table:
@@ -82,7 +69,7 @@ class Router:
     def recv_segment(self):
         segment, desde = self.rt_socket.recvfrom(1024) 
         print(f"###### {self.name} ######")
-        segment_dgram = dgrama.Dgram(segment) #con esto ya tenemos header(segmento) y diccionario del mensaje
+        segment_dgram = dgrama.Dgram(segment) #con esto ya tenemos header(segmento) y diccionario del mensaje, sirve para tomar desiciones
         segment_dest = (segment_dgram.header_dict["ip"], segment_dgram.header_dict["port"])
              
         #si es el router de destino o por defecto
@@ -96,7 +83,7 @@ class Router:
                 if not self.DEFAULT:
                     #redirecciona a router default
                     print(f"[ERROR] No hay rutas hacia {segment_dest} => ENVIADO A ROUTER DEFAULT\n")
-                    self.send_packet(segment_dest, segment_dgram.header_dict["msg"], DEFAULT_AD)
+                    self.rt_socket.sendto(segment, DEFAULT_AD)
 
                 else:
                     #imprime mensaje sin lugar en la red
@@ -105,12 +92,15 @@ class Router:
                     
             else:
                 print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop}\n")
-                self.send_packet(segment_dest, segment_dgram.header_dict["msg"], next_hop)
+                self.rt_socket.sendto(segment, next_hop)
 
 
     @staticmethod
-    def main(bind_ad: tuple[str, int], filename: str):
-        router = Router(bind_ad, filename)
+    def main(bind_ad: tuple[str, int], filename: str, default: bool = False):
+        if default:
+            router = Router(bind_ad, filename, True)
+        else:
+            router = Router(bind_ad, filename)
 
         #ciclo de recepcion de mensajes
         while True:
