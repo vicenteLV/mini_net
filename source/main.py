@@ -11,8 +11,8 @@ routers = [
     {"nombre": "Router1","ip": "127.0.0.1", "port": 8881, "filename": "R1"},
     {"nombre": "Router2","ip": "127.0.0.1", "port": 8882, "filename": "R2"},
     {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R3"},
-    {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R4"},
-    {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R5"} 
+    {"nombre": "Router4","ip": "127.0.0.1", "port": 8884, "filename": "R4"},
+    {"nombre": "Router5","ip": "127.0.0.1", "port": 8885, "filename": "R5"} 
 ]
                 
 

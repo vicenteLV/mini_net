@@ -15,12 +15,17 @@ class Router:
         self.rt_socket.bind(self.bind_ad)  #vincular a la direccion
         self.load_route_table(filename)    #inicializacion de la tabla de rutas
 
+        self.print_table()
+
+
+    def print_table(self):
         print("+-------------------------------------+")
         print(f"|        TABLA DE RUTAS DE {self.name}         |")
         print("+-------------------------------------+")
         for linea in self.rt_table:
             print(f"|{linea}|")
         print("+-------------------------------------+\n")
+
 
     def load_route_table(self, filename: str):
         with open(f"../rutas/rutas{filename}.txt") as file:
