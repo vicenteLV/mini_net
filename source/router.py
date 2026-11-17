@@ -16,6 +16,7 @@ class Router:
         self.load_route_table(filename)    #inicializacion de la tabla de rutas
 
         self.print_table()
+        
 
 
     def print_table(self):
@@ -33,6 +34,14 @@ class Router:
             self.rt_table = tabla_rutas.split("\n")
 
 
+    def rt_table_to_txt(self) -> str:
+        txt = ""
+        for linea in self.rt_table:
+            txt += linea
+
+        return txt
+
+
     def send_packet(self, final_ad: tuple[str, int], msg: str, next_ad: tuple[str, int]):
         #armar diccionario
         dict_segmento = {
@@ -46,7 +55,7 @@ class Router:
         self.rt_socket.sendto(packet_segmento, next_ad)
 
 
-    def check_routes(self, destination_address: tuple[str, int]) -> tuple[str, int]:
+    def check_routes(self, destination_address: tuple[str, int], debug = False) -> tuple[str, int]:
 
         for linea in self.rt_table:
             linea_split = linea.split(" ")
@@ -55,6 +64,14 @@ class Router:
             if destination_address[0] == ip_linea:
                 puerto_dest = destination_address[1]
                 if puerto_dest >= int(linea_split[1]) and puerto_dest <= int(linea_split[2]):
+
+                    #round-robin
+                    self.rt_table.remove(linea)
+                    self.rt_table.append(linea)
+                    if debug:
+                        print(f"[DEBUG] Nueva tabla de rutas para {self.name}")
+                        self.print_table()
+
                     return (linea_split[3], int(linea_split[4]))
 
         return None
@@ -71,7 +88,7 @@ class Router:
             print(f"{segment_dgram.header_dict["msg"]}\n")
 
         else: 
-            next_hop = self.check_routes(segment_dest)
+            next_hop = self.check_routes(segment_dest, True)
             if next_hop == None:
                 print(f"[ERROR] No hay rutas hacia {segment_dest} => DESCARTADO\n")
             else:
