@@ -5,6 +5,7 @@ header :: IP(4bytes);Puerto(2bytes);TTL(1byte);mensaje
 estructura header_bytes-> diccionario con campos ip, puerto, msg
 estructura header parseado -> {'ip': ... 
                                 'port': ...
+                                'ttl': ...
                                 'msg': ...}"""
 
 
@@ -20,10 +21,12 @@ class Dgram:
         dicc = {}
         ip = IP_packet[:4]
         port = IP_packet[4:6]
-        msg = IP_packet[6:]
+        ttl = IP_packet[6]
+        msg = IP_packet[7:]
         
         dicc["ip"] = f"{ip[0]}.{ip[1]}.{ip[2]}.{ip[3]}"
         dicc["port"] = int.from_bytes(port)
+        dicc["ttl"] = ttl
         dicc["msg"] = msg.decode()
 
         return dicc
@@ -50,9 +53,12 @@ class Dgram:
 
 
         port_bytes = parsed_IP_packet["port"].to_bytes(2)
+        ttl_bytes = bytes([parsed_IP_packet["ttl"]])
+
         msg_bytes = parsed_IP_packet["msg"].encode()
 
-        return bytes(ip_ints) + port_bytes + msg_bytes
+
+        return bytes(ip_ints) + port_bytes + ttl_bytes + msg_bytes
 
 
 
@@ -61,12 +67,14 @@ if __name__ == "__main__":
     #mini test para el parse_packet
     ip_str = "127.0.0.1"
     port_int = 5000
+    ttl = 10
     msg_str = "mensaje de prueba"
 
     ip_int = [int(p) for p in ip_str.split(".")]
     port_bytes = port_int.to_bytes(2)
+    ttl_bytes = bytes([ttl])
 
-    segment_bytes = bytes(ip_int) + port_bytes + msg_str.encode()
+    segment_bytes = bytes(ip_int) + port_bytes + ttl_bytes + msg_str.encode()
     dgram = Dgram(segment_bytes)
 
     dict_test = dgram.parse_packet(segment_bytes)
@@ -74,6 +82,7 @@ if __name__ == "__main__":
     assert(dict_test["ip"] == ip_str)
     assert(dict_test["port"] == port_int)
     assert(dict_test["msg"] == msg_str)
+    assert(dict_test["ttl"] == ttl)
 
     #corroborando que el segmento pasado por parse y create queda igual
     assert(segment_bytes == dgram.create_packet(dict_test))
