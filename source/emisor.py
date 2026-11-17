@@ -5,6 +5,7 @@ import dgrama
 import router
 
 NUMBER_OF_ROUTERS = 3
+R1_AD = ("127.0.0.1", 8881)
 
 emisor_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -76,11 +77,19 @@ if __name__ == "__main__":
     for i in range(len(paquetes)):
         test_pack_sending(i)
         time.sleep(2)
-    """
 
 
     print("##### ENVÍO FUERA DE LA RED #####")
     test_send_default()
+    """
+
+    pack = dgrama.Dgram.create_packet({
+        "ip": "127.0.0.1",
+        "port": 8885,
+        "msg": "mensaje para el router 5"
+    })
+    for i in range(3):
+        emisor_socket.sendto(pack, R1_AD)
 
 
     try:
