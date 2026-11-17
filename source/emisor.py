@@ -89,7 +89,9 @@ if __name__ == "__main__":
         "msg": "mensaje para el router 5"
     })
     for i in range(3):
+        print(f"Enviando paquete para R5 a traves de R1")
         emisor_socket.sendto(pack, R1_AD)
+        time.sleep(5)
 
 
     try:

@@ -1,7 +1,7 @@
 import socket
 
 """
-header :: IP(4bytes);Puerto(2bytes);mensaje
+header :: IP(4bytes);Puerto(2bytes);TTL(1byte);mensaje
 estructura header_bytes-> diccionario con campos ip, puerto, msg
 estructura header parseado -> {'ip': ... 
                                 'port': ...
