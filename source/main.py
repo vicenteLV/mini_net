@@ -10,7 +10,9 @@ import dgrama
 routers = [
     {"nombre": "Router1","ip": "127.0.0.1", "port": 8881, "filename": "R1"},
     {"nombre": "Router2","ip": "127.0.0.1", "port": 8882, "filename": "R2"},
-    {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R3"} 
+    {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R3"},
+    {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R4"},
+    {"nombre": "Router3","ip": "127.0.0.1", "port": 8883, "filename": "R5"} 
 ]
                 
 
@@ -20,16 +22,11 @@ for rt in routers:
     pid = os.fork()
 
     if pid == 0:
-            try:
-                #proceso hijo
-                router.Router.main((rt["ip"], rt["port"]), rt["filename"])
+            #proceso hijo
+            router.Router.main((rt["ip"], rt["port"]), rt["filename"])
 
-            except Exception as e:
-                 print(f"[ERROR] {rt["filename"]} falló: {e}")
-
-            finally:
-                os._exit(0)
-                 
+            os._exit(0)
+                
     else:
             print(f"[INFO] Proceso padre lanzó {rt["nombre"]} escuchando en {rt["ip"]}:{rt["port"]}")
 
@@ -44,17 +41,4 @@ try:
 except KeyboardInterrupt:
     print("[INFO] Apagando la red ...\n")
     sys.exit(0)
-        
-
     
-
-
-
-
-
-
-
-
-
-    #Router = router.Router((sys.argv[1], int(sys.argv[2])), sys.argv[3])
-    #print(Router.rt_table)
