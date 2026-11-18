@@ -19,6 +19,7 @@ class Router:
         self.load_route_table(filename)    #inicializacion de la tabla de rutas
 
         self.print_table()
+        self.buffer_de_fragmentos: dict = {}
         
 
 
@@ -59,7 +60,7 @@ class Router:
         for i in range(1, len(frags)):
             actual = frags[i]
             j = i-1
-            while j >= 0 and frags[j][campo] > actual[campo]:
+            while j >= 0 and frags[j].header_dict[campo] > actual.header_dict[campo]:
                 frags[j + 1] = frags[j]
                 j -= 1
 
@@ -67,14 +68,13 @@ class Router:
 
 
     @staticmethod
-    def fragment_IP_packet(IP_packet: bytes, MTU: int) -> list[dgrama.Dgram]:
-        if len(IP_packet) <= MTU:
-            mensaje = dgrama.Dgram(IP_packet)
-            mensaje.header_dict["offset"] = 0
-            return [mensaje]
+    def fragment_IP_packet(IP_packet: dgrama.Dgram, MTU: int) -> list[dgrama.Dgram]:
+        if len(IP_packet.header) <= MTU:
+            IP_packet.header_dict["offset"] = 0
+            return [IP_packet]
 
         fragmentacion = []
-        dict_segmento = dgrama.Dgram.parse_packet(IP_packet)
+        dict_segmento = dgrama.Dgram.parse_packet(IP_packet.header)
         msg_bytes = dict_segmento["msg"].encode()
 
         #tamaño de header será siempre 15B, entonces el mensaje solo se 
@@ -90,7 +90,7 @@ class Router:
                 "ttl": dict_segmento["ttl"],
                 "id": dict_segmento["id"],
                 "offset": offset_frag,
-                "size": len(msg_bytes),
+                "size": len(msg_frag),
                 "flag": 1 if msg_bytes else 0,  #detecta automaticamente si hay mas contenido
                 "msg": msg_frag.decode()
             }
@@ -104,7 +104,8 @@ class Router:
         return fragmentacion
 
 
-    def reassemble_IP_packet(self, fragment_list: list[dgrama.Dgram]) -> dgrama.Dgram:
+    @staticmethod
+    def reassemble_IP_packet(fragment_list: list[dgrama.Dgram]) -> dgrama.Dgram:
         number_of_frag = len(fragment_list)
         msg_segmento = ""
         msg_size = 0
@@ -115,13 +116,13 @@ class Router:
         segmento_offset_inicial = fragment_list[0].header_dict["offset"]
 
         if number_of_frag == 1:
-            if (fragment_list[0]["flag"]) or (fragment_list[0]["offset"] > 0):
+            if (fragment_list[0].header_dict["flag"]) or (fragment_list[0].header_dict["offset"] > 0):
                 print("[ERROR] Lista no valida")
                 return None
 
             else:
                 print("Paquete retornado con mensaje:" \
-                f"{fragment_list[0]["msg"]}\n")
+                f"{fragment_list[0].header_dict["msg"]}\n")
                 return fragment_list[0]
 
         else:
@@ -138,7 +139,7 @@ class Router:
                     msg_segmento += fragment.header_dict["msg"]
                     msg_size += fragment.header_dict["size"]
                     #proximo offset
-                    offset += (fragment.header_dict["size"] + 1)
+                    offset += (fragment.header_dict["size"])
 
                     if fragment.header_dict["flag"] == 0:
                         dict_segment = {
@@ -157,10 +158,14 @@ class Router:
                 else:
                     print("[ERROR] Segmento incompleto descartado")
                     return None
-        
 
 
-         
+
+    def try_reassemble(self, id: int):
+        lista = self.buffer_de_fragmentos[id]
+        data = Router.reassemble_IP_packet(lista)
+        return data
+    
 
 
 
@@ -200,13 +205,28 @@ class Router:
 
         segment_dest = (segment_dgram.header_dict["ip"], segment_dgram.header_dict["port"])
              
-        #si es el router de destino o por defecto
+        #si es el router de destino
         if segment_dest[0] == self.bind_ad[0] and segment_dest[1] == self.bind_ad[1]:
-            print(f"Fragmento recibido desde {desde}:")
-            print(f"ID de mensaje: {segment_dgram.header_dict["id"]}")
-            print(f"Offset de fragmento: {segment_dgram.header_dict["offset"]}")
-            print(f"Tamaño del fragmento: {segment_dgram.header_dict["size"]}")
-            print(f"Ultimo?: {not segment_dgram.header_dict["flag"]}")
+            id_del_segmento = segment_dgram.header_dict["id"]
+            if not id_del_segmento in self.buffer_de_fragmentos:
+                self.buffer_de_fragmentos[id_del_segmento] = []
+            
+            self.buffer_de_fragmentos[id_del_segmento].append(segment_dgram)
+
+            segmento_completo = self.try_reassemble(id_del_segmento) #intentar cada vez que se recibe un segmento
+            if not segmento_completo == None:
+                print("Segmento completo recibido: \n" \
+                f"{segmento_completo.header_dict["msg"]} (size = {segmento_completo.header_dict["size"]})")
+                self.buffer_de_fragmentos[id_del_segmento] = []
+            else:
+                #ver info de fragmentos 
+                print(f"Fragmento recibido desde {desde}:")
+                print(f"ID de mensaje: {segment_dgram.header_dict["id"]}")
+                print(f"Offset de fragmento: {segment_dgram.header_dict["offset"]}")
+                print(f"Tamaño del fragmento: {segment_dgram.header_dict["size"]}")
+                print(f"Ultimo?: {not segment_dgram.header_dict["flag"]}")
+
+                print(self.buffer_de_fragmentos)  #DEBUG, se aprecia que la lista se agranda cuando recibe fragmentos 
 
         else: 
             next_hop_MTU = self.check_routes(segment_dest)
@@ -216,7 +236,7 @@ class Router:
                     
             else:
                 print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop_MTU[0]} con MTU: {next_hop_MTU[1]}\n")
-                lista_de_fragmentos = Router.fragment_IP_packet(segment, next_hop_MTU[1])
+                lista_de_fragmentos = Router.fragment_IP_packet(segment_dgram, next_hop_MTU[1])
 
                 for fragmento in lista_de_fragmentos:
                     self.send_pack(fragmento, next_hop_MTU[0])
@@ -237,7 +257,25 @@ class Router:
 
 if __name__ == "__main__":
     bind_ad_r = ("127.0.0.1", 5000)
-    Router.main(bind_ad_r, "R1")
+    R1 = Router(bind_ad_r, "R1")
+
+    mensaje = "mensaje de prueba para check, largo para ver si aguanta varios offset"
+    paquete = dgrama.Dgram.create_packet({
+        "ip": "127.0.0.1",
+        "port": 8883,
+        "ttl": 10,
+        "id": 30,
+        "offset": 0,
+        "size": len(mensaje.encode()),
+        "flag": 0,
+        "msg": mensaje            
+        })
+
+    paquete_v1 = dgrama.Dgram(paquete)
+
+    paquete_frag = Router.fragment_IP_packet(paquete_v1, 25)
+    paquete_v2 = Router.reassemble_IP_packet(paquete_frag)
+    assert(paquete_v1.header == paquete_v2.header)
 
 
     
