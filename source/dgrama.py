@@ -118,6 +118,24 @@ class Dgram:
         return fragmentacion
 
 
+    @staticmethod
+    def print_fragment(frags: list):
+        i = 1
+        for frag in frags:
+            print(f"FRAGMENTO {i}")
+            print(f"IP: {frag.header_dict["ip"]}")
+            print(f"Port: {frag.header_dict["port"]}")
+            print(f"TTL: {frag.header_dict["ttl"]}")
+            print(f"ID: {frag.header_dict["id"]}")
+            print(f"Offset: {frag.header_dict["offset"]}")
+            print(f"Size: {frag.header_dict["size"]}")
+            print(f"Flag: {frag.header_dict["flag"]}\n")
+    
+            i += 1
+
+
+
+
 
 if __name__ == "__main__":
 
@@ -128,54 +146,56 @@ if __name__ == "__main__":
     id = 33
     offset = 56
     flag = 0
-    msg_str = "mensaje de prueba, necesita ser un poco mas largo para probar la fragmentacion"
-    size = len(msg_str.encode())
+    msg_str1 = "mensaje de prueba, necesita ser un poco mas largo para probar la fragmentacion"
+    msg_str2 = "mensaje corto"
+    size1 = len(msg_str1.encode())
+    size2 = len(msg_str2.encode())
 
     ip_int = [int(p) for p in ip_str.split(".")]
     port_bytes = port_int.to_bytes(2)
     ttl_bytes = bytes([ttl])
     id_bytes = bytes([id])
     offset_bytes = offset.to_bytes(2)
-    size_bytes = size.to_bytes(4)
+
+    size1_bytes = size1.to_bytes(4)
+    size2_bytes = size2.to_bytes(4)
+
     flag_bytes = bytes([flag])
 
-    header_ip_bytes = bytes(ip_int)+port_bytes+ttl_bytes+id_bytes+offset_bytes+size_bytes+flag_bytes 
+    header_ip_bytes1 = bytes(ip_int)+port_bytes+ttl_bytes+id_bytes+offset_bytes+size1_bytes+flag_bytes 
+    header_ip_bytes2 = bytes(ip_int)+port_bytes+ttl_bytes+id_bytes+offset_bytes+size2_bytes+flag_bytes 
 
-    segment_bytes = header_ip_bytes + msg_str.encode()
-    dgram = Dgram(segment_bytes)
+    segment_bytes1 = header_ip_bytes1 + msg_str1.encode()
+    segment_bytes2 = header_ip_bytes2 + msg_str2.encode()
 
-    dict_test = dgram.parse_packet(segment_bytes)
+    dgram1 = Dgram(segment_bytes1)
+    dgram2 = Dgram(segment_bytes2)
+
+    dict_test = dgram1.parse_packet(segment_bytes1)
 
     assert(dict_test["ip"] == ip_str)
     assert(dict_test["port"] == port_int)
-    assert(dict_test["msg"] == msg_str)
+    assert(dict_test["msg"] == msg_str1)
     assert(dict_test["ttl"] == ttl)
     assert(dict_test["id"] == id)
     assert(dict_test["offset"] == offset)
-    assert(dict_test["size"] == size)
+    assert(dict_test["size"] == size1)
     assert(dict_test["flag"] == flag)
 
 
     #corroborando que el segmento pasado por parse y create queda igual
-    assert(segment_bytes == dgram.create_packet(dict_test))
+    assert(segment_bytes1 == dgram1.create_packet(dict_test))
 
     print("##### PROBANDO FRAGMENTACION #####")
-    fragmentos1 = Dgram.fragment_IP_packet(segment_bytes, 25)
+    fragmentos1 = Dgram.fragment_IP_packet(segment_bytes1, 25)
 
 
-    i = 1
-    for frag in fragmentos1:
-        print(f"FRAGMENTO {i}")
-        print(f"IP: {frag.header_dict["ip"]}")
-        print(f"Port: {frag.header_dict["port"]}")
-        print(f"TTL: {frag.header_dict["ttl"]}")
-        print(f"ID: {frag.header_dict["id"]}")
-        print(f"Offset: {frag.header_dict["offset"]}")
-        print(f"Size: {frag.header_dict["size"]}")
-        print(f"Flag: {frag.header_dict["flag"]}\n")
+    Dgram.print_fragment(fragmentos1)
 
-        i += 1
-
+    print("--> Fragmentacion de mensaje corto")
+    fragmentos2 = Dgram.fragment_IP_packet(dgram2)
+    Dgram.print_fragment(fragmentos2)
+    
 
 
     
