@@ -16,6 +16,7 @@ estructura header parseado -> {'ip': ...
 
 
 class Dgram:
+    size_header = 15 #en bytes
 
     def __init__(self, segment: bytes):
         self.header : bytes = segment
@@ -81,6 +82,42 @@ class Dgram:
         return header_ip_bytes + msg_bytes
 
 
+    @staticmethod
+    def fragment_IP_packet(IP_packet: bytes, MTU: int) -> list:
+        if len(IP_packet) <= MTU:
+            return [IP_packet]
+
+        fragmentacion = []
+        dict_segmento = Dgram.parse_packet(IP_packet)
+        msg_bytes = dict_segmento["msg"].encode()
+
+        #tamaño de header será siempre 15B, entonces el mensaje solo se 
+        #podra enviar de a cada (MTU -15)B
+        delta_msg = MTU - 15
+        offset_frag = 0     #offset empieza en 0
+        while msg_bytes:
+            msg_frag = msg_bytes[:delta_msg]
+            msg_bytes = msg_bytes[delta_msg:]
+            dict_msg_frag = {
+                "ip": dict_segmento["ip"],
+                "port": dict_segmento["port"],
+                "ttl": dict_segmento["ttl"],
+                "id": dict_segmento["id"],
+                "offset": offset_frag,
+                "size": dict_segmento["size"],
+                "flag": 1 if msg_bytes else 0,
+                "msg": msg_frag.decode()
+            }
+            #envuelto en el header, se inicializa un Dgram
+            msg_frag_wrapped = Dgram.create_packet(dict_msg_frag)
+            dgram_fragment = Dgram(msg_frag_wrapped)
+            fragmentacion.append(dgram_fragment)
+
+            offset_frag += len(msg_frag)
+
+        return fragmentacion
+
+
 
 if __name__ == "__main__":
 
@@ -90,9 +127,9 @@ if __name__ == "__main__":
     ttl = 10
     id = 33
     offset = 56
-    size = 400
     flag = 0
-    msg_str = "mensaje de prueba"
+    msg_str = "mensaje de prueba, necesita ser un poco mas largo para probar la fragmentacion"
+    size = len(msg_str.encode())
 
     ip_int = [int(p) for p in ip_str.split(".")]
     port_bytes = port_int.to_bytes(2)
@@ -121,6 +158,25 @@ if __name__ == "__main__":
 
     #corroborando que el segmento pasado por parse y create queda igual
     assert(segment_bytes == dgram.create_packet(dict_test))
+
+    print("##### PROBANDO FRAGMENTACION #####")
+    fragmentos1 = Dgram.fragment_IP_packet(segment_bytes, 25)
+
+
+    i = 1
+    for frag in fragmentos1:
+        print(f"FRAGMENTO {i}")
+        print(f"IP: {frag.header_dict["ip"]}")
+        print(f"Port: {frag.header_dict["port"]}")
+        print(f"TTL: {frag.header_dict["ttl"]}")
+        print(f"ID: {frag.header_dict["id"]}")
+        print(f"Offset: {frag.header_dict["offset"]}")
+        print(f"Size: {frag.header_dict["size"]}")
+        print(f"Flag: {frag.header_dict["flag"]}\n")
+
+        i += 1
+
+
 
     
 

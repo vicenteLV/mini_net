@@ -11,6 +11,8 @@ emisor_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 if __name__ == "__main__":
+
+    print("#####ENVIO ENTRE ROUTERS R1 y R3 para probar funcion check")
     paquete = dgrama.Dgram.create_packet({
         "ip": "127.0.0.1",
         "port": 8883,
