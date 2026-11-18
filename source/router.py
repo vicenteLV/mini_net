@@ -23,12 +23,11 @@ class Router:
 
 
     def print_table(self):
-        print("+-------------------------------------+")
-        print(f"|        TABLA DE RUTAS DE {self.name}         |")
-        print("+-------------------------------------+")
+        print(f"------------TABLA DE RUTAS DE {self.name}-----------")
+        print("-------------------------------------------")
         for linea in self.rt_table:
-            print(f"|{linea}|")
-        print("+-------------------------------------+\n")
+            print(f"{linea}")
+        print("-------------------------------------------\n")
 
 
     def load_route_table(self, filename: str):
