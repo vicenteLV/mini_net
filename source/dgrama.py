@@ -84,45 +84,6 @@ class Dgram:
 
 
 
-
-
-
-def fragment_IP_packet(IP_packet: bytes, MTU: int) -> list[Dgram]:
-    if len(IP_packet) <= MTU:
-        mensaje = Dgram(IP_packet)
-        mensaje.header_dict["offset"] = 0
-        return [mensaje]
-
-    fragmentacion = []
-    dict_segmento = Dgram.parse_packet(IP_packet)
-    msg_bytes = dict_segmento["msg"].encode()
-
-    #tamaño de header será siempre 15B, entonces el mensaje solo se 
-    #podra enviar de a cada (MTU -15)B
-    delta_msg = MTU - 15
-    offset_frag = 0     #offset empieza en 0
-    while msg_bytes:
-        msg_frag = msg_bytes[:delta_msg]
-        msg_bytes = msg_bytes[delta_msg:]   #actualizacion inmediata del buufer del mensaje
-        dict_msg_frag = {
-            "ip": dict_segmento["ip"],
-            "port": dict_segmento["port"],
-            "ttl": dict_segmento["ttl"],
-            "id": dict_segmento["id"],
-            "offset": offset_frag,
-            "size": dict_segmento["size"],
-            "flag": 1 if msg_bytes else 0,  #detecta automaticamente si hay mas contenido
-            "msg": msg_frag.decode()
-        }
-        #envuelto en el header, se inicializa un Dgram
-        msg_frag_wrapped = Dgram.create_packet(dict_msg_frag)
-        dgram_fragment = Dgram(msg_frag_wrapped)
-        fragmentacion.append(dgram_fragment)
-
-        offset_frag += len(msg_frag)
-
-    return fragmentacion
-
 def print_fragment(frags: list[Dgram]):
         i = 1
         for frag in frags:
