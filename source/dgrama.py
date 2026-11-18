@@ -82,44 +82,48 @@ class Dgram:
         return header_ip_bytes + msg_bytes
 
 
-    @staticmethod
-    def fragment_IP_packet(IP_packet: bytes, MTU: int) -> list:
-        if len(IP_packet) <= MTU:
-            return [IP_packet]
-
-        fragmentacion = []
-        dict_segmento = Dgram.parse_packet(IP_packet)
-        msg_bytes = dict_segmento["msg"].encode()
-
-        #tamaño de header será siempre 15B, entonces el mensaje solo se 
-        #podra enviar de a cada (MTU -15)B
-        delta_msg = MTU - 15
-        offset_frag = 0     #offset empieza en 0
-        while msg_bytes:
-            msg_frag = msg_bytes[:delta_msg]
-            msg_bytes = msg_bytes[delta_msg:]
-            dict_msg_frag = {
-                "ip": dict_segmento["ip"],
-                "port": dict_segmento["port"],
-                "ttl": dict_segmento["ttl"],
-                "id": dict_segmento["id"],
-                "offset": offset_frag,
-                "size": dict_segmento["size"],
-                "flag": 1 if msg_bytes else 0,
-                "msg": msg_frag.decode()
-            }
-            #envuelto en el header, se inicializa un Dgram
-            msg_frag_wrapped = Dgram.create_packet(dict_msg_frag)
-            dgram_fragment = Dgram(msg_frag_wrapped)
-            fragmentacion.append(dgram_fragment)
-
-            offset_frag += len(msg_frag)
-
-        return fragmentacion
 
 
-    @staticmethod
-    def print_fragment(frags: list):
+
+
+
+def fragment_IP_packet(IP_packet: bytes, MTU: int) -> list[Dgram]:
+    if len(IP_packet) <= MTU:
+        mensaje = Dgram(IP_packet)
+        mensaje.header_dict["offset"] = 0
+        return [mensaje]
+
+    fragmentacion = []
+    dict_segmento = Dgram.parse_packet(IP_packet)
+    msg_bytes = dict_segmento["msg"].encode()
+
+    #tamaño de header será siempre 15B, entonces el mensaje solo se 
+    #podra enviar de a cada (MTU -15)B
+    delta_msg = MTU - 15
+    offset_frag = 0     #offset empieza en 0
+    while msg_bytes:
+        msg_frag = msg_bytes[:delta_msg]
+        msg_bytes = msg_bytes[delta_msg:]   #actualizacion inmediata del buufer del mensaje
+        dict_msg_frag = {
+            "ip": dict_segmento["ip"],
+            "port": dict_segmento["port"],
+            "ttl": dict_segmento["ttl"],
+            "id": dict_segmento["id"],
+            "offset": offset_frag,
+            "size": dict_segmento["size"],
+            "flag": 1 if msg_bytes else 0,  #detecta automaticamente si hay mas contenido
+            "msg": msg_frag.decode()
+        }
+        #envuelto en el header, se inicializa un Dgram
+        msg_frag_wrapped = Dgram.create_packet(dict_msg_frag)
+        dgram_fragment = Dgram(msg_frag_wrapped)
+        fragmentacion.append(dgram_fragment)
+
+        offset_frag += len(msg_frag)
+
+    return fragmentacion
+
+def print_fragment(frags: list[Dgram]):
         i = 1
         for frag in frags:
             print(f"FRAGMENTO {i}")
@@ -133,10 +137,6 @@ class Dgram:
     
             i += 1
 
-
-
-
-
 if __name__ == "__main__":
 
     #mini test para el parse_packet
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     offset = 56
     flag = 0
     msg_str1 = "mensaje de prueba, necesita ser un poco mas largo para probar la fragmentacion"
-    msg_str2 = "mensaje corto"
+    msg_str2 = "corto"
     size1 = len(msg_str1.encode())
     size2 = len(msg_str2.encode())
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     dgram1 = Dgram(segment_bytes1)
     dgram2 = Dgram(segment_bytes2)
 
-    dict_test = dgram1.parse_packet(segment_bytes1)
+    dict_test = dgram1.header_dict
 
     assert(dict_test["ip"] == ip_str)
     assert(dict_test["port"] == port_int)
@@ -187,14 +187,15 @@ if __name__ == "__main__":
     assert(segment_bytes1 == dgram1.create_packet(dict_test))
 
     print("##### PROBANDO FRAGMENTACION #####")
-    fragmentos1 = Dgram.fragment_IP_packet(segment_bytes1, 25)
+    fragmentos1 = fragment_IP_packet(segment_bytes1, 25)
 
 
-    Dgram.print_fragment(fragmentos1)
+    print_fragment(fragmentos1)
 
     print("--> Fragmentacion de mensaje corto")
-    fragmentos2 = Dgram.fragment_IP_packet(dgram2)
-    Dgram.print_fragment(fragmentos2)
+    fragmentos2 = fragment_IP_packet(segment_bytes2, 25)
+    print_fragment(fragmentos2)
+    assert(len(fragmentos2) == 1)
     
 
 
