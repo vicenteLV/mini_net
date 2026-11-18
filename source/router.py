@@ -70,7 +70,6 @@ class Router:
     @staticmethod
     def fragment_IP_packet(IP_packet: dgrama.Dgram, MTU: int) -> list[dgrama.Dgram]:
         if len(IP_packet.header) <= MTU:
-            IP_packet.header_dict["offset"] = 0
             return [IP_packet]
 
         fragmentacion = []
@@ -80,7 +79,8 @@ class Router:
         #tamaño de header será siempre 15B, entonces el mensaje solo se 
         #podra enviar de a cada (MTU -15)B
         delta_msg = MTU - 15
-        offset_frag = 0     #offset empieza en 0
+        offset_frag = dict_segmento["offset"]     #offset empieza en 0
+        flag_original = dict_segmento["flag"]
         while msg_bytes:
             msg_frag = msg_bytes[:delta_msg]
             msg_bytes = msg_bytes[delta_msg:]   #actualizacion inmediata del buufer del mensaje
@@ -91,7 +91,7 @@ class Router:
                 "id": dict_segmento["id"],
                 "offset": offset_frag,
                 "size": len(msg_frag),
-                "flag": 1 if msg_bytes else 0,  #detecta automaticamente si hay mas contenido
+                "flag": 1 if msg_bytes else flag_original,  #detecta automaticamente si hay mas contenido o si la flag original es 1 o 0
                 "msg": msg_frag.decode()
             }
             #envuelto en el header, se inicializa un Dgram
@@ -216,7 +216,7 @@ class Router:
             segmento_completo = self.try_reassemble(id_del_segmento) #intentar cada vez que se recibe un segmento
             if not segmento_completo == None:
                 print("Segmento completo recibido: \n" \
-                f"{segmento_completo.header_dict["msg"]} (size = {segmento_completo.header_dict["size"]})")
+                f"{segmento_completo.header_dict["msg"]}\n(size = {segmento_completo.header_dict["size"]})\n")
                 self.buffer_de_fragmentos[id_del_segmento] = []
             else:
                 #ver info de fragmentos 
@@ -227,6 +227,7 @@ class Router:
                 print(f"Ultimo?: {not segment_dgram.header_dict["flag"]}")
 
                 print(self.buffer_de_fragmentos)  #DEBUG, se aprecia que la lista se agranda cuando recibe fragmentos 
+                print("")
 
         else: 
             next_hop_MTU = self.check_routes(segment_dest)

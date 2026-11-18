@@ -16,7 +16,7 @@ if __name__ == "__main__":
     """
     print("#####ENVIO ENTRE ROUTERS R1 y R3 para probar funcion check")
     mensaje = "mensaje de prueba para check, largo para ver si aguanta varios offset"
-    paquete = dgrama.Dgram.create_packet({
+    paquete1 = dgrama.Dgram.create_packet({
         "ip": "127.0.0.1",
         "port": 8883,
         "ttl": 10,
@@ -28,16 +28,35 @@ if __name__ == "__main__":
         })
 
 
-    emisor_socket.sendto(paquete, R1_AD)
+    with open("../pruebas/prueba.txt") as f:
+        text = f.read()
 
 
+    paquete2 = dgrama.Dgram.create_packet({
+            "ip": "127.0.0.1",
+            "port": 8883,
+            "ttl": 10,
+            "id": 31,
+            "offset": 0,
+            "size": len(text.encode()),
+            "flag": 0,
+            "msg": text            
+            })
 
+
+    emisor_socket.sendto(paquete1, R1_AD)
+    time.sleep(1)
+    emisor_socket.sendto(paquete2, R1_AD)
+
+
+"""
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         emisor_socket.close()
+"""
 
         
 

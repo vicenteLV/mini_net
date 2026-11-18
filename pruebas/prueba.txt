@@ -1,0 +1,5 @@
+TEXTO DE PRUEBA PARA FRAGMENTACION
+Linea 01: Inicio del mensaje largo para probar fragmentacion en red.
+Linea 02: Este paquete debe dividirse en varios saltos con distintos MTU.
+Linea 03: Verificando orden de offsets y banderas en el router destino.
+Linea 04: Fin de la transmision exitosa del archivo de prueba.
