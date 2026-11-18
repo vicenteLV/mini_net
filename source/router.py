@@ -45,6 +45,17 @@ class Router:
         return txt
 
 
+    def send_pack(self, segmento: dgrama.Dgram, to: tuple[str, int]):
+        diccionario = segmento.header_dict
+        diccionario["ttl"] -= 1
+
+        nuevo_pack = dgrama.Dgram.create_packet(diccionario)
+
+        self.rt_socket.sendto(nuevo_pack, to)
+         
+
+
+
     def check_routes(self, destination_address: tuple[str, int], debug = False) -> tuple[str, int]:
 
         for linea in self.rt_table:
@@ -70,6 +81,11 @@ class Router:
         segment, desde = self.rt_socket.recvfrom(1024) 
         print(f"###### {self.name} ######")
         segment_dgram = dgrama.Dgram(segment) #con esto ya tenemos header(segmento) y diccionario del mensaje, sirve para tomar desiciones
+
+        if segment_dgram.header_dict["ttl"] <= 0:
+            print("Se recibió paquete con TTL = 0\n")
+            return
+
         segment_dest = (segment_dgram.header_dict["ip"], segment_dgram.header_dict["port"])
              
         #si es el router de destino o por defecto
@@ -78,12 +94,12 @@ class Router:
             print(f"{segment_dgram.header_dict["msg"]}\n")
 
         else: 
-            next_hop = self.check_routes(segment_dest, True)
+            next_hop = self.check_routes(segment_dest)
             if next_hop == None:
                 if not self.DEFAULT:
                     #redirecciona a router default
                     print(f"[ERROR] No hay rutas hacia {segment_dest} => ENVIADO A ROUTER DEFAULT\n")
-                    self.rt_socket.sendto(segment, DEFAULT_AD)
+                    self.send_pack(segment_dgram, DEFAULT_AD)
 
                 else:
                     #imprime mensaje sin lugar en la red
@@ -92,7 +108,7 @@ class Router:
                     
             else:
                 print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop}\n")
-                self.rt_socket.sendto(segment, next_hop)
+                self.send_pack(segment_dgram, next_hop)
 
 
     @staticmethod
