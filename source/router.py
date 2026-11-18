@@ -55,7 +55,7 @@ class Router:
 
 
 
-    def check_routes(self, destination_address: tuple[str, int], debug = False) -> tuple[str, int]:
+    def check_routes(self, destination_address: tuple[str, int], debug = False) -> tuple[tuple[str, int], int]:
 
         for linea in self.rt_table:
             linea_split = linea.split(" ")
@@ -72,7 +72,9 @@ class Router:
                         print(f"[DEBUG] Nueva tabla de rutas para {self.name}")
                         self.print_table()
 
-                    return (linea_split[3], int(linea_split[4]))
+                    next_hop = (linea_split[3], int(linea_split[4])) 
+
+                    return (next_hop, int(linea_split[5]))
 
         return None
 
@@ -93,12 +95,11 @@ class Router:
             print(f"{segment_dgram.header_dict["msg"]}\n")
 
         else: 
-            next_hop = self.check_routes(segment_dest)
-            if next_hop == None:
+            next_hop_MTU = self.check_routes(segment_dest)
+            if next_hop_MTU == None:
                 if not self.DEFAULT:
-                    #redirecciona a router default
-                    print(f"[ERROR] No hay rutas hacia {segment_dest} => ENVIADO A ROUTER DEFAULT\n")
-                    self.send_pack(segment_dgram, DEFAULT_AD)
+                    #descartado
+                    print(f"[ERROR] No hay rutas hacia {segment_dest} => DESCARTADO\n")
 
                 else:
                     #imprime mensaje sin lugar en la red
@@ -106,8 +107,8 @@ class Router:
                     print(f"{segment_dgram.header_dict["msg"]}\n")
                     
             else:
-                print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop}\n")
-                self.send_pack(segment_dgram, next_hop)
+                print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop_MTU[0]}\n")
+                self.send_pack(segment_dgram, next_hop_MTU[0])
 
 
     @staticmethod
