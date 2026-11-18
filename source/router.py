@@ -1,4 +1,5 @@
 import socket
+import time
 
 import dgrama 
 
@@ -6,14 +7,13 @@ DEFAULT_AD = ("127.0.0.1", 7000) #direccion del router default
 
 class Router:
 
-    def __init__(self, bind_ad: tuple[str, int], filename: str, default: bool = False):
+    def __init__(self, bind_ad: tuple[str, int], filename: str):
         print(f"##### INICIANDO ROUTER {filename} #####")
         print(f"Direccion de vinculacion: {bind_ad}")
         self.name: str = filename
         self.rt_socket:socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.bind_ad: tuple[str, int] = bind_ad
         self.rt_table: list[str] = None
-        self.DEFAULT: bool = default
 
         self.rt_socket.bind(self.bind_ad)  #vincular a la direccion
         self.load_route_table(filename)    #inicializacion de la tabla de rutas
@@ -78,6 +78,8 @@ class Router:
 
         return None
 
+    
+
     def recv_segment(self):
         segment, desde = self.rt_socket.recvfrom(1024) 
         print(f"###### {self.name} ######")
@@ -91,32 +93,32 @@ class Router:
              
         #si es el router de destino o por defecto
         if segment_dest[0] == self.bind_ad[0] and segment_dest[1] == self.bind_ad[1]:
-            print(f"Mensaje recibido desde {desde}:")
-            print(f"{segment_dgram.header_dict["msg"]}\n")
+            print(f"Fragmento recibido desde {desde}:")
+            print(f"ID de mensaje: {segment_dgram.header_dict["id"]}")
+            print(f"Offset de fragmento: {segment_dgram.header_dict["offset"]}")
+            print(f"Tamaño del mensaje: {segment_dgram.header_dict["size"]}")
+            print(f"Ultimo?: {not segment_dgram.header_dict["flag"]}")
 
         else: 
             next_hop_MTU = self.check_routes(segment_dest)
             if next_hop_MTU == None:
-                if not self.DEFAULT:
-                    #descartado
-                    print(f"[ERROR] No hay rutas hacia {segment_dest} => DESCARTADO\n")
-
-                else:
-                    #imprime mensaje sin lugar en la red
-                    print(f"Mensaje recibido desde {desde}:")
-                    print(f"{segment_dgram.header_dict["msg"]}\n")
+                #descartado
+                print(f"[ERROR] No hay rutas hacia {segment_dest} => DESCARTADO\n")
                     
             else:
-                print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop_MTU[0]}\n")
-                self.send_pack(segment_dgram, next_hop_MTU[0])
+                print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop_MTU[0]} con MTU: {next_hop_MTU[1]}\n")
+                lista_de_fragmentos = dgrama.fragment_IP_packet(segment, next_hop_MTU[1])
+
+                for fragmento in lista_de_fragmentos:
+                    self.send_pack(fragmento, next_hop_MTU[0])
+                    time.sleep(1)
+
+
 
 
     @staticmethod
-    def main(bind_ad: tuple[str, int], filename: str, default: bool = False):
-        if default:
-            router = Router(bind_ad, filename, True)
-        else:
-            router = Router(bind_ad, filename)
+    def main(bind_ad: tuple[str, int], filename: str):
+        router = Router(bind_ad, filename)
 
         #ciclo de recepcion de mensajes
         while True:
