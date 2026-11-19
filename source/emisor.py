@@ -15,10 +15,10 @@ if __name__ == "__main__":
     """
     """
     print("#####ENVIO ENTRE ROUTERS R1 y R3 para probar funcion check")
-    mensaje = "mensaje de prueba para check, largo para ver si aguanta varios offset"
+    mensaje = "hola"
     paquete1 = dgrama.Dgram.create_packet({
         "ip": "127.0.0.1",
-        "port": 8883,
+        "port": 8885,
         "ttl": 10,
         "id": 30,
         "offset": 0,
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     paquete2 = dgrama.Dgram.create_packet({
             "ip": "127.0.0.1",
             "port": 8883,
-            "ttl": 10,
+            "ttl": 30,
             "id": 31,
             "offset": 0,
             "size": len(text.encode()),

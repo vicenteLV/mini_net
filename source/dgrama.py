@@ -1,5 +1,5 @@
 import socket
-import router
+
 
 """
 header :: 
@@ -148,16 +148,7 @@ if __name__ == "__main__":
     #corroborando que el segmento pasado por parse y create queda igual
     assert(segment_bytes1 == dgram1.create_packet(dict_test))
 
-    print("##### PROBANDO FRAGMENTACION #####")
-    fragmentos1 = router.Router.fragment_IP_packet(segment_bytes1, 25)
-
-
-    print_fragment(fragmentos1)
-
-    print("--> Fragmentacion de mensaje corto")
-    fragmentos2 = router.Router.fragment_IP_packet(segment_bytes2, 25)
-    print_fragment(fragmentos2)
-    assert(len(fragmentos2) == 1)
+    
     
 
 

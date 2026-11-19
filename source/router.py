@@ -237,6 +237,7 @@ class Router:
                     
             else:
                 print(f"[INFO] Redirigiendo paquete con destino final {segment_dest} desde {self.bind_ad} hacia {next_hop_MTU[0]} con MTU: {next_hop_MTU[1]}\n")
+                segment_dgram.header_dict["ttl"] -=1
                 lista_de_fragmentos = Router.fragment_IP_packet(segment_dgram, next_hop_MTU[1])
 
                 for fragmento in lista_de_fragmentos:
